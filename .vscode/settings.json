@@ -1,0 +1,11 @@
+{
+    "go.inferGopath": false,
+    "cSpell.words": [
+        "brianvoe",
+        "dbcontext",
+        "gofakeit",
+        "ozzo",
+        "stretchr"
+    ],
+    "go.testFlags": ["-v"]
+}
