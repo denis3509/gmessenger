@@ -42,7 +42,7 @@ type Client struct {
 	hub *Hub
 	// 0 if non-authorized
 	UserId int
-
+	
 	// The websocket connection.
 	conn *websocket.Conn
 

@@ -28,7 +28,11 @@ const (
 	userAuth           IncomingEvent = "user:authenticate"
 )
 
-type EventHandler func(*Client, []byte)
+type EventHandler struct {
+	HandleFunc func(*Client, []byte)
+	NeedAuth bool
+}
+ 
 
 type SocketMessage struct {
 	Event   string
@@ -71,21 +75,29 @@ type ErrorPayload struct {
 	Message string `json:"message"`
 }
 
+func NewErrPayload(message string) []byte {
+	errMsg := ErrorPayload{message}
+	payload, err := json.Marshal(&errMsg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return payload
+}
+
 func (h *Hub) HandleMessage(client *Client, message []byte) {
 	var sm SocketMessage
 	json.Unmarshal(message, &sm)
 	if handlers, ok := h.eventHandlers[sm.Event]; ok {
 		for _, h := range handlers {
-			h(client, []byte(sm.Payload))
+			if h.NeedAuth {
+				// TODO Check Auth 
+				h.HandleFunc(client, []byte(sm.Payload))
+			} else {
+				h.HandleFunc(client, []byte(sm.Payload))	
+			}
 		}
 	} else {
-		errMsg := ErrorPayload{
-			fmt.Sprintf("unknown event '%s'", sm.Event),
-		}
-		payload, err := json.Marshal(&errMsg)
-		if err != nil {
-			log.Fatal(err)
-		}
+		payload := NewErrPayload(fmt.Sprintf("unknown event '%s'", sm.Event))
 		client.Send("error", payload)
 	}
 }
