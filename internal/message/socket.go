@@ -47,4 +47,5 @@ func (r *resource) createMessage(client *socket.Client, dataRaw []byte) {
 	if recipient != nil {
 		recipient.Send("message:new", jsonMsg)
 	}
+	
 }

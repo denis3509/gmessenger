@@ -9,8 +9,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"time"
-
+	"time" 
 	"github.com/gorilla/websocket"
 )
 
@@ -77,19 +76,27 @@ func (c *Client) readPump() {
 		c.hub.HandleMessage(c, message)
 	}
 }
- 
 
-func (c *Client) Send (event string, payload []byte) error {
-   message := map[string]string{}
-   message["event"] = event
-   message["payload"] = string(payload)
-   data, err := json.Marshal(&message)
-   if err != nil {
-	return err
-   }
-   c.send <- data 
-   return nil   
+func (c *Client) Send(event string, payload []byte) error {
+	message := map[string]string{}
+	message["event"] = event
+
+	
+	if c.hub.cfg.Debug {
+		if !json.Valid(payload) {
+			log.Fatalf("%s: invalid json - %s", event, string(payload))
+		}
+	}
+
+	message["payload"] = string(payload)
+	data, err := json.Marshal(&message)
+	if err != nil {
+		return err
+	}
+	c.send <- data
+	return nil
 }
+
 // writePump pumps messages from the hub to the websocket connection.
 //
 // A goroutine running writePump is started for each connection. The

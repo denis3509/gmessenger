@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"messenger/internal/auth"
 	"messenger/internal/config"
 )
 
@@ -35,6 +36,7 @@ type SocketMessage struct {
 }
 
 type Hub struct {
+	auth auth.Service
 	// Registered clients.
 	clients map[*Client]bool
 	// Auth clients

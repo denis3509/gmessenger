@@ -10,7 +10,7 @@ const (
 	 from message
 	 where created_at = maxTime
 	   and (sender_id = {:user} or recipient_id = {:user})
-	 limit 1) as last_message,
+	 limit 1) as last_message_text,
 	(select is_read  
 	 from message
 	 where created_at = maxTime

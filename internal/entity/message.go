@@ -17,11 +17,13 @@ type (
 	}
 
 	Contact struct {
-		UserID int
-		Username         string
-		LastMessageText string
-		LastMessageRead bool
+		UserID          int    `json:"userID"`
+		Username        string `json:"username"`
+		LastMessageText string `json:"lastMessageText"`
+		LastMessageRead bool   `json:"lastMessageRead"`
+		Unread          int    `json:"unread"`
 	}
+	
 )
 
 func (m ChatMessage) TableName() string {
