@@ -9,6 +9,7 @@ type Service interface {
 type service struct {
 	users map[string]int
 }
+
 func (s service) Login(username string, password string) string {
 	panic("not implemented") // TODO: Implement
 }
@@ -22,6 +23,3 @@ func (s service) GetUserId(sessionKey string) (int, error) {
 }
 
 // s service
-
-
-

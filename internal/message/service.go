@@ -49,11 +49,21 @@ func (s service) CreateMessage(senderId int, recipientId int, text string) (*ent
 
 }
 
-type ContactList struct {
-	TotalUnread int
-	contacts    []entity.Contact
-}
+type (
+	Contact struct {
+		UserID          int    `json:"userID"`
+		Username        string `json:"username"`
+		LastMessageText string `json:"lastMessageText"`
+		LastMessageRead bool   `json:"lastMessageRead"`
+		Unread          int    `json:"unread"`
+	}
+	
 
+ ContactList struct {
+	TotalUnread int
+	contacts    [] Contact
+}
+)
 func (s service) GetContactList(userId int) (*ContactList, error) {
 	contacts, err := s.repository.Contacts(userId)
 	if err != nil {

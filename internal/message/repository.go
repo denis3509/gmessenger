@@ -1,8 +1,8 @@
 package message
 
 import (
- 
 	"messenger/internal/entity"
+	"messenger/pkg/db"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 )
@@ -26,20 +26,20 @@ type Repository interface {
 	// Delete removes the message with given ID from the storage.
 	Delete(id int) error
 	// Contacts return contact list for user
-	Contacts(userId int) ([]entity.Contact, error)
+	Contacts(userId int) ([]Contact, error)
 	// Dialog returns messages between two users
 	Dialog(userId1, userId2, offset, limit int) ([]entity.ChatMessage, error)
 }
 
 // repository persists messages in database
 type repository struct {
-	db *dbx.DB
+	db *db.DB
 	// logger log.Logger
 
 }
 
 // NewRepository creates a new message repository
-func NewRepository(db *dbx.DB) Repository {
+func NewRepository(db *db.DB) Repository {
 	return repository{
 		db,
 		//  logger,
@@ -144,10 +144,10 @@ func (r repository) Dialog(userId1, userId2, offset, limit int) ([]entity.ChatMe
 }
 
 // Contacts return contact list
-func (r repository) Contacts(userId int) ([]entity.Contact, error) {
+func (r repository) Contacts(userId int) ([] Contact, error) {
 	q := r.db.NewQuery(contactListSQL)
 	q.Bind(dbx.Params{"user": userId})
-	var contacts []entity.Contact
+	var contacts [] Contact
 	err := q.All(&contacts)
 	return contacts, err
 }

@@ -16,14 +16,6 @@ type (
 		DeletedByRecipient bool      `json:"deletedByRecipient"`
 	}
 
-	Contact struct {
-		UserID          int    `json:"userID"`
-		Username        string `json:"username"`
-		LastMessageText string `json:"lastMessageText"`
-		LastMessageRead bool   `json:"lastMessageRead"`
-		Unread          int    `json:"unread"`
-	}
-	
 )
 
 func (m ChatMessage) TableName() string {

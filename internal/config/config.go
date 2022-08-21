@@ -1,17 +1,52 @@
 package config
+
+import "fmt"
+
  
-type Config struct {
-	Port int
-	Debug bool
-	DSN string
-}
-var Default = Config {
-	Port: 3000,
-	Debug : false,
-	DSN: "postgres://localhost:5432/golang_messenger?sslmode=disable&user=denis&password=localpass",
+
+type DBConfig struct {
+	Name      string
+	DriverName string
+	Host string
+	Port      int
+	User      string
+	Password  string
 }
 
-func GetConfig() Config{ 
+type Config struct {
+	DB DBConfig
+	Port  int
+	Debug bool
+	DSN   string
+}
+
+var Default = Config{
+	Port:  3000,
+	Debug: false,
+	DSN:   "postgres://localhost:5432/golang_messenger?sslmode=disable&user=denis&password=localpass",
+	DB: DBConfig {
+		Name:      "golang_messenger",
+		DriverName: "postgres",
+		Port:     5432,
+		User:     "denis",
+		Password: "localpass",
+	},
+}
+
+func (c *DBConfig) DSN() string {
+	return fmt.Sprintf("%s://%s:%d/%s?sslmode=disable&user=%s&password=%s",
+		c.DriverName,
+		c.Host,
+		c.Port,
+		c.Name,
+		c.User,
+		c.Password,
+	)
+}
+
+
+
+func GetConfig() Config {
 	return Default
 }
 

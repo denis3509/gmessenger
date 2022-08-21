@@ -10,10 +10,10 @@ import (
 
 func TestRepository(t *testing.T) {
 
-	db := test.DB()
-	test.ResetTables(t, db, "message")
+	db := test.NewTestDB(t)
+	test.ResetTables(t, &db, "message")
 	defer db.Close()
-	repo := NewRepository(db)
+	repo := NewRepository(&db)
 	faker := Faker{}
 
 	// Insert
@@ -82,7 +82,7 @@ func TestRepository(t *testing.T) {
 	assert.Equal(t, 2, unreadCount)
 	t.Logf("Unread count is: %d", unreadCount)
 
-	// set read
+	// set messages read
 	affected, err := repo.SetMessagesRead(1, 2)
 	assert.Nil(t, err)
 	assert.Equal(t, unreadCount, affected)
