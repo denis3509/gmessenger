@@ -87,7 +87,7 @@ func (r repository) CountUnread(userId int) (int, error) {
 	err := r.db.Select("COUNT(*)").
 		From("message").
 		Where(dbx.HashExp{"recipient_id": userId,
-		"is_read": false}).
+			"is_read": false}).
 		Row(&count)
 	return count, err
 }
@@ -97,7 +97,7 @@ func (r repository) SetMessagesRead(senderId, recipientId int) (int, error) {
 	cond := dbx.HashExp{
 		"sender_id":    int64(senderId),
 		"recipient_id": int64(recipientId),
-		"is_read": false,
+		"is_read":      false,
 	}
 	params := dbx.Params{"is_read": true}
 	res, err := r.db.Update("message", params, cond).Execute()
@@ -144,10 +144,10 @@ func (r repository) Dialog(userId1, userId2, offset, limit int) ([]entity.ChatMe
 }
 
 // Contacts return contact list
-func (r repository) Contacts(userId int) ([] Contact, error) {
+func (r repository) Contacts(userId int) ([]Contact, error) {
 	q := r.db.NewQuery(contactListSQL)
 	q.Bind(dbx.Params{"user": userId})
-	var contacts [] Contact
+	var contacts []Contact
 	err := q.All(&contacts)
 	return contacts, err
 }

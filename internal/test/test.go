@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"log"
+
 	"messenger/internal/config"
 	"testing"
 
@@ -11,7 +12,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func NewTestDB(t *testing.T) db.DB {
+func NewDB(t *testing.T) db.DB {
 	cfg := config.GetConfig().DB
 	testCfg := cfg
 	testCfg.Name = cfg.Name + "_test"
@@ -56,6 +57,9 @@ func DropAndCreateTestDB() {
 }
 
 func ResetTables(t *testing.T, db *db.DB, tables ...string) {
+	if len(tables)==0 {
+		tables = append(tables, "user", "message")
+	}
 	for _, table := range tables {
 		_, err := db.TruncateTable(table).Execute()
 		if err != nil {
@@ -64,3 +68,4 @@ func ResetTables(t *testing.T, db *db.DB, tables ...string) {
 		}
 	}
 }
+

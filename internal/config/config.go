@@ -16,12 +16,14 @@ type DBConfig struct {
 type Config struct {
 	DB DBConfig
 	Port  int
+	SocketPort int
 	Debug bool
 	DSN   string
 }
 
 var Default = Config{
-	Port:  3000,
+	Port:  8000,
+ 
 	Debug: false,
 	DSN:   "postgres://localhost:5432/golang_messenger?sslmode=disable&user=denis&password=localpass",
 	DB: DBConfig {

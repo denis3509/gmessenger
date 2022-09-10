@@ -1,0 +1,19 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "run server",
+            "type": "shell",
+            "command": "grc -c pylog.conf go run /home/denis/go/src/messenger/cmd/server/main.go",
+            "problemMatcher": [] 
+        },
+        {
+            "label": "ws client",
+            "type": "shell",
+            "command": "websocat --jsonrpc ws://localhost:8000/ws",
+            "problemMatcher": []  
+        }
+    ]
+}

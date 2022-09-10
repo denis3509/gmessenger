@@ -6,9 +6,10 @@ package socket
 
 import (
 	"encoding/json"
+
 	"fmt"
-	"log"
-	"messenger/internal/auth"
+	"messenger/pkg/log"
+
 	"messenger/internal/config"
 )
 
@@ -21,30 +22,22 @@ type Payload interface {
 type IncomingEvent string
 type OutgoingEvent string
 
-const (
-	messageCreate      IncomingEvent = "message:create"
-	messageList        IncomingEvent = "message:list"
-	messageContactList IncomingEvent = "message:contact-list"
-	userAuth           IncomingEvent = "user:authenticate"
-)
-
 type EventHandler struct {
 	HandleFunc func(*Client, []byte)
-	NeedAuth bool
+	NeedAuth   bool
 }
- 
 
 type SocketMessage struct {
-	Event   string
-	Payload string
+	Event   string `json:"event"`
+	Payload string `json:"payload"`
 }
 
 type Hub struct {
-	auth auth.Service
+
 	// Registered clients.
 	clients map[*Client]bool
 	// Auth clients
-	authClients map[int]*Client
+	authClients map[int][]*Client
 	// event handlers
 	eventHandlers map[string][]EventHandler
 	// Inbound messages from the clients.
@@ -57,6 +50,7 @@ type Hub struct {
 	unregister chan *Client
 
 	cfg config.Config
+	log  log.Logger
 }
 
 func (h *Hub) AddHandler(event string, handler EventHandler) {
@@ -75,13 +69,15 @@ type ErrorPayload struct {
 	Message string `json:"message"`
 }
 
-func NewErrPayload(message string) []byte {
-	errMsg := ErrorPayload{message}
-	payload, err := json.Marshal(&errMsg)
-	if err != nil {
-		log.Fatal(err)
+func ErrMessage(message string) SocketMessage {
+
+	payload := fmt.Sprintf("{\"message\":\"%s\"}", message)
+
+	return SocketMessage{
+		Event:   "error",
+		Payload: payload,
 	}
-	return payload
+
 }
 
 func (h *Hub) HandleMessage(client *Client, message []byte) {
@@ -90,45 +86,47 @@ func (h *Hub) HandleMessage(client *Client, message []byte) {
 	if handlers, ok := h.eventHandlers[sm.Event]; ok {
 		for _, h := range handlers {
 			if h.NeedAuth {
-				// TODO Check Auth 
+				// TODO Check Auth
 				h.HandleFunc(client, []byte(sm.Payload))
 			} else {
-				h.HandleFunc(client, []byte(sm.Payload))	
+				h.HandleFunc(client, []byte(sm.Payload))
 			}
 		}
-	} else {
-		payload := NewErrPayload(fmt.Sprintf("unknown event '%s'", sm.Event))
-		client.Send("error", payload)
+	} else { 
+		errSm := ErrMessage(fmt.Sprintf("unknown event '%s'", sm.Event))
+		client.Send(errSm)
 	}
 }
 
-func (h *Hub) ClientById(userId int) *Client {
-	client, ok := h.authClients[userId]
-	if ok {
-		return client
-	} else {
-		return nil
-	}
-}
+// func (h *Hub) ClientsByUserId(userId int) *[]Client {
+// 	clients, ok := h.authClients[userId]
+// 	if ok {
+// 		return clients
+// 	} else {
+// 		return nil
+// 	}
+// }
 
-func newHub() *Hub {
+func NewHub(log log.Logger) *Hub {
 	return &Hub{
 		broadcast:  make(chan []byte),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
+		log: log,
 	}
 }
 
-func (h *Hub) run() {
+func (h *Hub) Run() {
+	h.log.Info("Running hub")
 	for {
 		select {
 		case client := <-h.register:
+			h.log.Info("new client", client.conn.RemoteAddr())
 			h.clients[client] = true
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
-				delete(h.clients, client)
-				close(client.send)
+				h.deleteClient(client)
 			}
 		case message := <-h.broadcast:
 			for client := range h.clients {
@@ -140,5 +138,79 @@ func (h *Hub) run() {
 				}
 			}
 		}
+	}
+}
+
+func (h *Hub) deleteClient(client *Client) {
+	userId := client.userId
+
+	delete(h.clients, client)
+	close(client.send)
+	client.conn.Close()
+	if client.userId > 0 {
+		clients, ok := h.authClients[userId]
+		if !ok {
+			h.log.Fatalf("client %s not found by id", userId)
+		}
+		newClients := make([]*Client, len(clients)-1)
+		for _, c := range clients {
+			if c != client {
+				newClients = append(newClients, c)
+			}
+		}
+		h.authClients[userId] = newClients
+	}
+}
+
+func (h *Hub) SendByClient(c *Client, msg SocketMessage) error {
+	if _, ok := h.clients[c]; ok {
+		if err := c.Send(msg); err != nil {
+			return err
+		}
+
+		if c.userId > 0 {
+			if err := h.SendByUserId(c.userId, msg); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (h *Hub) SendByUserId(userId int, msg SocketMessage) error {
+	if clients, ok := h.authClients[userId]; ok {
+		for _, c := range clients {
+			if err := c.Send(msg); err != nil {
+				h.log.Fatal(err)
+				// return err
+			}
+		}
+	}
+	return nil
+}
+
+func (h *Hub) AddAuthClient(userId int, client *Client) {
+	client.userId = userId
+	// if clients, ok := h.authClients[userId]; ok {
+	// 	clients = append(clients, client)
+	// 	h.authClients[userId] = clients
+	// } else {
+	// 	clients := make([]*Client, 0)
+	// 	clients = append(clients, client)
+	// 	h.authClients[userId] = clients
+	// }
+	clients, ok := h.authClients[userId]
+	if !ok {
+		clients = make([]*Client, 0)
+	}
+	clients = append(clients, client)
+	h.authClients[userId] = clients
+}
+
+func (h *Hub) CloseAll() {
+	fmt.Println("closing all connections")
+	for c := range h.clients {
+
+		h.deleteClient(c)  
 	}
 }

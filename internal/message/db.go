@@ -16,7 +16,7 @@ const (
 	 where created_at = maxTime
 	   and (sender_id = {:user} or recipient_id = {:user})
 	 limit 1) as last_message_read,
-	unread
+	coalesce(unread, 0) as unread 
 from (select (case
 			   when (sender_id = {:user})
 				   then (sender_id)
